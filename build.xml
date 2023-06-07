@@ -1,0 +1,140 @@
+<project name="CAB302" default="all" basedir=".">
+	<property name="clientBase" value="dest/clientArtifacts" />
+	<property name="serverBase" value="dest/serverArtifacts" />
+	<property name="testBase" value="dest/testFiles" />
+	<property name="docBase" value="dest/doc" />
+	<property name="utestBase" value="dest/utestClasses" />
+	<path id="lib.classpath">
+		<fileset dir="lib">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="server.classpath">
+		<fileset dir="src">
+			<include name="Common/*/*.java" />
+			<include name="Common/*.java" />
+			<include name="Server/*/*.java" />
+			<include name="Server/*.java" />
+		</fileset>
+	</path>
+	<target name ="all" depends="clean, compile server, compile client, doc, compileTests, utest, build"/>
+	<target name="prepare" depends ="clean" description="Create target directories">
+		<mkdir dir="${testBase}" />
+		<mkdir dir="${clientBase}" />
+		<mkdir dir="${serverBase}" />
+		<mkdir dir="${docBase}" />
+		<mkdir dir="${utestBase}" />
+	</target>
+
+	<target name="compile client" depends="prepare, compile server" description="Compile Client source" >
+		<javac srcdir="src"  destdir="${clientBase}" includeantruntime="false">
+			<classpath refid="lib.classpath"/>
+			<include name="Common/*/*.java" />
+			<include name="Common/*.java" />
+			<include name="Client/*/*.java" />
+			<include name="Client/*.java" />
+		</javac>
+	</target>
+
+	<target name="compile server" depends="prepare" description="Compile Server source" >
+		<javac srcdir="src"  destdir="${serverBase}" includeantruntime="false">
+			<classpath refid="lib.classpath"/>
+			<include name="Common/*/*.java" />
+			<include name="Common/*.java" />
+			<include name="Server/*/*.java" />
+			<include name="Server/*.java" />
+		</javac>
+	</target>
+
+	<target name="compileTests" depends="compile client, compile server" description="Compile tests" >
+		<javac srcdir="utest"  classpath="${serverBase}" destdir="${utestBase}" includeantruntime="false">
+			<classpath refid="lib.classpath"/>
+			<include name="TestDAO/*.java" />
+			<include name="TestModel/*.java" />
+		</javac>
+	</target>
+
+	<target name="utest" depends="compileTests" description="Run JUnit">
+		<junitlauncher printSummary="true" failureProperty="junit.failure">
+			<classpath refid="lib.classpath"/>
+			<classpath>
+				<pathelement path="${utestBase}:${clientBase}" />
+			</classpath>
+			<testclasses outputDir="${testBase}">
+				<fileset dir="${utestBase}"/>
+				<listener type="legacy-xml"/>
+			</testclasses>
+		</junitlauncher>
+		<fail if="junit.failure" message="junit tests failed - aborting"/>
+	</target>
+
+	<target name="build" depends="utest" >
+		<jar destfile="CAB302Client.jar" basedir="${clientBase}">
+			<manifest>
+				<!-- Who is building this jar? -->
+				<attribute name="Built-By" value="${user.name}"/>
+				<!-- Information about the program itself -->
+				<attribute name="Implementation-Vendor" value="QUT"/>
+				<attribute name="Implementation-Title" value="CAB302 Assignment"/>
+				<attribute name="Implementation-Version" value="1.0.0"/>
+			</manifest>
+		</jar>
+		<jar destfile="CAB302Server.jar" basedir="${serverBase}">
+			<manifest>
+				<!-- Who is building this jar? -->
+				<attribute name="Built-By" value="${user.name}"/>
+				<!-- Information about the program itself -->
+				<attribute name="Implementation-Vendor" value="QUT"/>
+				<attribute name="Implementation-Title" value="CAB302 Assignment"/>
+				<attribute name="Implementation-Version" value="1.0.0"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="doc">
+		<javadoc
+				sourcepath="src"
+				destdir="${docBase}"
+				author="true"
+				version="true"
+				use="true"
+				windowtitle="CAB302 Project API">
+			<fileset dir="src">
+				<include name="Client/*/*.java" />
+				<include name="Client/*.java" />
+				<include name="Common/*/*.java" />
+				<include name="Common/*.java" />
+				<include name="Server/*/*.java" />
+				<include name="Server/*.java" />
+			</fileset>
+			<doctitle><![CDATA[<h1>Electronic Asset Trading Platform</h1>]]></doctitle>
+			<bottom><![CDATA[<i>Copyright &#169;  QUT. All Rights Reserved.</i>]]></bottom>
+		</javadoc>
+	</target>
+
+
+	<target name="clean">
+		<delete file="./CAB302Client.jar"/>
+		<delete file="./CAB302Server.jar"/>
+		<delete file="./CAB302ClientSrc.zip"/>
+		<delete file="./CAB302ServerSrc.zip"/>
+		<delete dir="${clientBase}"/>
+		<delete dir="${serverBase}"/>
+		<delete dir="${docBase}"/>
+		<delete dir="${testBase}"/>
+		<delete dir="${utestBase}"/>
+	</target>
+
+	<target name="src" depends="doc">
+		<zip destfile="CAB302ClientSrc.zip"
+			 basedir="src"
+			 update="true"
+		/>
+		<zip destfile="CAB302ServerSrc.zip"
+			 basedir="src"
+			 update="true"
+		/>
+	</target>
+
+</project>
